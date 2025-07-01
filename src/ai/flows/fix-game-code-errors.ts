@@ -14,7 +14,6 @@ import {z} from 'genkit';
 const FixGeneratedGameCodeErrorsInputSchema = z.object({
   code: z.string().describe('The p5.js code to fix.'),
   errorMessage: z.string().describe('The error message from the p5.js runtime.'),
-  apiKey: z.string().optional().describe('The Gemini API key.'),
 });
 export type FixGeneratedGameCodeErrorsInput = z.infer<
   typeof FixGeneratedGameCodeErrorsInputSchema
@@ -91,11 +90,7 @@ const fixGeneratedGameCodeErrorsFlow = ai.defineFlow(
     outputSchema: FixGeneratedGameCodeErrorsOutputSchema,
   },
   async input => {
-    const model = ai.getModel({
-      model: 'googleai/gemini-2.0-flash',
-      auth: {apiKey: input.apiKey!},
-    });
-    const {output} = await prompt(input, { model });
+    const {output} = await prompt(input);
     return output!;
   }
 );

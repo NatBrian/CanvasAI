@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
-const GREETING_PROMPT = "A simple breakout-style game.";
+const GREETING_PROMPT = "";
 
 export default function Home() {
   const [gameCode, setGameCode] = useLocalStorage<string>("game-code", "");
@@ -167,7 +167,7 @@ export default function Home() {
         <div className="max-w-3xl mx-auto">
           <div className="flex items-end gap-2">
             <Textarea 
-              placeholder="A simple pong game..."
+              placeholder="A simple breakout-style game."
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               className="flex-grow text-base resize-none rounded-xl bg-input border-border min-h-[52px] focus-visible:ring-primary/50"

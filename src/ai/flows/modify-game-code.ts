@@ -14,7 +14,6 @@ import {z} from 'genkit';
 const ModifyGameCodeInputSchema = z.object({
   prompt: z.string().describe('The prompt to use to modify the existing p5.js game code.'),
   currentCode: z.string().describe('The current p5.js game code.'),
-  apiKey: z.string().optional().describe('The Gemini API key.'),
 });
 export type ModifyGameCodeInput = z.infer<typeof ModifyGameCodeInputSchema>;
 
@@ -88,11 +87,7 @@ const modifyGameCodeFlow = ai.defineFlow(
     outputSchema: ModifyGameCodeOutputSchema,
   },
   async input => {
-    const model = ai.getModel({
-      model: 'googleai/gemini-2.0-flash',
-      auth: {apiKey: input.apiKey!},
-    });
-    const {output} = await prompt(input, { model });
+    const {output} = await prompt(input);
     return output!;
   }
 );
