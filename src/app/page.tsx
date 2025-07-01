@@ -206,7 +206,7 @@ export default function Home() {
                           <span className="sr-only">View AI Process</span>
                         </Button>
                       </SheetTrigger>
-                      <SheetContent className="w-[90vw] max-w-[540px] bg-card/95 backdrop-blur-lg border-l-border/50 p-0">
+                      <SheetContent className="w-full sm:max-w-none bg-card/95 backdrop-blur-lg border-l-border/50 p-0">
                         <ScrollArea className="h-full w-full rounded-md p-6">
                           <SheetHeader className="text-left mb-4">
                             <SheetTitle className="text-2xl font-headline">AI Process</SheetTitle>

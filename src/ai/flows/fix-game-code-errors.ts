@@ -14,6 +14,7 @@ import {z} from 'genkit';
 const FixGeneratedGameCodeErrorsInputSchema = z.object({
   code: z.string().describe('The p5.js code to fix.'),
   errorMessage: z.string().describe('The error message from the p5.js runtime.'),
+  apiKey: z.string().optional().describe('The Gemini API key.'),
 });
 export type FixGeneratedGameCodeErrorsInput = z.infer<
   typeof FixGeneratedGameCodeErrorsInputSchema
@@ -41,13 +42,45 @@ const prompt = ai.definePrompt({
 
 In the "thoughts" field, provide a step-by-step thinking process on how you will fix the code, formatted in markdown.
 
-In the "fixedCode" field, provide the corrected p5.js code. You will be given p5.js code that contains errors and the corresponding error message. Your goal is to fix the errors and return only the fixed p5.js code. All p5 functions must be prefixed with 'p.'. DO NOT include a call to 'p.createCanvas()', as it is handled outside this code. IMPORTANT: Any variables that rely on canvas dimensions like 'p.width' or 'p.height' MUST be initialized inside the 'p.setup()' function. Initializing them at the top level will cause a crash because the canvas does not exist yet. Do not add any comments or explanations in the code.
+In the "fixedCode" field, provide the corrected p5.js code. You will be given p5.js code that contains errors and the corresponding error message. Your goal is to fix the errors and return only the fixed p5.js code.
 
 The p5.js code is:
 {{{code}}}
 
 The error was:
 {{{errorMessage}}}
+
+### **CRITICAL CODE REQUIREMENTS**
+**CRITICAL: The fixed code MUST strictly follow ALL of these rules without deviation. Failure to adhere to any rule will result in an invalid output. These rules override all other common coding conventions.**
+
+1.  **Execution Context (No \`new p5\`)**
+    * DO NOT generate code that uses \`let p5 = new p5(...)\`, \`new p5()\`, or any other instantiation of p5.
+    * You must assume the code will be executed in a context where a \`p\` instance object is already globally available and configured.
+
+2.  **File Structure (Single Raw Script)**
+    * The entire output MUST be a single block of raw Javascript code.
+    * DO NOT wrap the script in any outer function, such as the common \`(p) => { ... }\` instance mode wrapper. The code must begin with \`let\` variable declarations or \`function\` definitions at the top level.
+
+3.  **Mandatory \`p.\` Prefix**
+    * ALL native p5.js functions, properties, and constants (e.g., \`createCanvas\`, \`background\`, \`fill\`, \`rect\`, \`width\`, \`height\`, \`keyCode\`, \`LEFT_ARROW\`, \`mouseX\`, \`mouseY\`, \`random\`, \`floor\`, \`color\`) MUST be prefixed with \`p.\` (e.g., \`p.background()\`, \`p.width\`, \`p.random()\`).
+    * This rule is absolute. There are no exceptions.
+
+4.  **Function Definition & Assignment Rules**
+    * **p5.js Lifecycle Functions**: Core p5.js event functions (\`setup\`, \`draw\`, \`mousePressed\`, \`mouseReleased\`, \`keyPressed\`, etc.) MUST be defined as **arrow functions** and assigned directly to the \`p\` instance.
+        * **Correct:** \`p.setup = () => { ... };\`
+        * **Correct:** \`p.draw = () => { ... };\`
+        * **INCORRECT:** \`function setup() { ... }\` or \`this.setup = function() { ... }\`
+    * **Custom Helper/Constructor Functions**: All other functions you write for logic, objects, or calculations can be defined using standard \`function Name() {}\` or ES6 \`class\` syntax.
+
+5.  **Variable Initialization Scope**
+    * Any variable that requires the p5.js canvas or environment to be initialized (i.e., depends on \`p.width\`, \`p.height\`, or other values set in \`setup\`) MUST be initialized *inside* the \`p.setup()\` function.
+    * You may declare the variable at the global top level (e.g., \`let snake;\`), but its assignment/instantiation MUST occur within \`p.setup()\` (e.g., \`snake = new Snake();\`).
+
+6.  **Canvas Management**
+    * DO NOT include a call to \`p.createCanvas()\`. The canvas is created and managed externally.
+    
+7.  **No Comments**
+    * Do not add any comments or explanations in the code.
   `,
 });
 
@@ -58,7 +91,11 @@ const fixGeneratedGameCodeErrorsFlow = ai.defineFlow(
     outputSchema: FixGeneratedGameCodeErrorsOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
+    const model = ai.getModel({
+      model: 'googleai/gemini-2.0-flash',
+      auth: {apiKey: input.apiKey!},
+    });
+    const {output} = await prompt(input, { model });
     return output!;
   }
 );
