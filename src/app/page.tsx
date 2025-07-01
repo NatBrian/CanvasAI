@@ -21,6 +21,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { track } from "@vercel/analytics/react";
 
 const GREETING_PROMPT = "";
 
@@ -60,6 +61,7 @@ export default function Home() {
   const handleGenerate = async () => {
     if (!prompt.trim()) return;
 
+    track(gameCode ? "Update Game" : "Generate Game", { promptLength: prompt.length });
     setIsLoading(true);
     setSketchError(null);
 
@@ -80,6 +82,7 @@ export default function Home() {
         setPrompt("");
       }
     } catch (error) {
+      track("AI Generation Failed", { error: (error as Error).message });
       console.error(error);
       toast({
         title: "AI Generation Failed",
@@ -95,6 +98,7 @@ export default function Home() {
   const handleFixError = async () => {
     if (!sketchError || !gameCode) return;
 
+    track("Fix Error", { errorMessage: sketchError.message });
     setIsLoading(true);
     
     try {
@@ -106,6 +110,7 @@ export default function Home() {
         setAiThoughts(result.thoughts);
         setSketchError(null); 
     } catch (error) {
+        track("AI Fix Failed", { error: (error as Error).message });
         console.error("Failed to fix code with AI:", error);
         toast({
             title: "Failed to Fix Code",
@@ -119,6 +124,7 @@ export default function Home() {
   
   const handleCopyCode = () => {
     if (!gameCode) return;
+    track("Copy Code");
     navigator.clipboard.writeText(gameCode);
     toast({
       title: "Code Copied!",
@@ -132,6 +138,7 @@ export default function Home() {
   }, []);
   
   const handleClearCode = () => {
+    track("Clear Canvas");
     setGameCode("");
     setAiThoughts("");
     setSketchError(null);
